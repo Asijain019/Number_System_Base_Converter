@@ -1,0 +1,324 @@
+"""
+Base Converter GUI Application
+
+A Python tkinter application for converting numbers between different numerical bases.
+Supports bases 2-16 and handles both integer and decimal numbers.
+
+Author: Asi Jain
+License: MIT
+"""
+
+import tkinter as tk
+from tkinter import messagebox
+import os
+import sys
+
+
+class BaseConverterGUI:
+    """Main GUI class for the Base Converter application."""
+    
+    def __init__(self):
+        """Initialize the GUI application."""
+        self.root = tk.Tk()
+        self.root.title("Base Converter")
+        self.root.geometry("400x600")
+        self.root.resizable(True, True)
+        
+        # Configure styling
+        self.root.configure(bg='#f0f0f0')
+        
+        # Initialize logo variable
+        self.logo = None
+        
+        self.create_widgets()
+
+    def create_widgets(self):
+        """Create and arrange all GUI widgets."""
+        # Main frame
+        main_frame = tk.Frame(self.root, bg='#f0f0f0', padx=20, pady=20)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Title
+        title_label = tk.Label(
+            main_frame, 
+            text="Base Converter", 
+            font=('Arial', 24, 'bold'),
+            bg='#f0f0f0',
+            fg='#333333'
+        )
+        title_label.pack(pady=(0, 20))
+        
+        # Logo (optional - only show if logo file exists)
+        self.load_logo(main_frame)
+        
+        # Input section
+        input_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        input_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        # Number input
+        tk.Label(
+            input_frame, 
+            text="Number:", 
+            font=('Arial', 12, 'bold'),
+            bg='#f0f0f0'
+        ).pack(anchor=tk.W)
+        
+        self.number_entry = tk.Entry(
+            input_frame, 
+            font=('Arial', 12),
+            width=30,
+            relief=tk.RIDGE,
+            bd=2
+        )
+        self.number_entry.pack(fill=tk.X, pady=(5, 10))
+        
+        # From base input
+        tk.Label(
+            input_frame, 
+            text="From Base (2-16):", 
+            font=('Arial', 12, 'bold'),
+            bg='#f0f0f0'
+        ).pack(anchor=tk.W)
+        
+        self.from_base_entry = tk.Entry(
+            input_frame, 
+            font=('Arial', 12),
+            width=30,
+            relief=tk.RIDGE,
+            bd=2
+        )
+        self.from_base_entry.pack(fill=tk.X, pady=(5, 10))
+        
+        # To base input
+        tk.Label(
+            input_frame, 
+            text="To Base (2-16):", 
+            font=('Arial', 12, 'bold'),
+            bg='#f0f0f0'
+        ).pack(anchor=tk.W)
+        
+        self.to_base_entry = tk.Entry(
+            input_frame, 
+            font=('Arial', 12),
+            width=30,
+            relief=tk.RIDGE,
+            bd=2
+        )
+        self.to_base_entry.pack(fill=tk.X, pady=(5, 10))
+        
+        # Convert button
+        self.convert_button = tk.Button(
+            main_frame, 
+            text="Convert", 
+            command=self.convert,
+            font=('Arial', 14, 'bold'),
+            bg='#4CAF50',
+            fg='white',
+            relief=tk.RAISED,
+            bd=3,
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        )
+        self.convert_button.pack(pady=20)
+        
+        # Result section
+        result_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        result_frame.pack(fill=tk.BOTH, expand=True)
+        
+        tk.Label(
+            result_frame, 
+            text="Result:", 
+            font=('Arial', 12, 'bold'),
+            bg='#f0f0f0'
+        ).pack(anchor=tk.W)
+        
+        self.result_text = tk.Text(
+            result_frame, 
+            height=3, 
+            width=40,
+            font=('Arial', 12),
+            relief=tk.RIDGE,
+            bd=2,
+            wrap=tk.WORD
+        )
+        self.result_text.pack(fill=tk.BOTH, expand=True, pady=(5, 10))
+        
+        # Clear button
+        clear_button = tk.Button(
+            main_frame,
+            text="Clear All",
+            command=self.clear_all,
+            font=('Arial', 10),
+            bg='#f44336',
+            fg='white',
+            relief=tk.RAISED,
+            bd=2,
+            padx=15,
+            pady=5,
+            cursor='hand2'
+        )
+        clear_button.pack(pady=(0, 10))
+        
+        # Bind Enter key to convert
+        self.root.bind('<Return>', lambda event: self.convert())
+
+    def load_logo(self, parent):
+        """Load and display logo if it exists."""
+        logo_paths = [
+            "logo.png",
+            "assets/logo.png",
+            "images/logo.png",
+            os.path.join(os.path.dirname(__file__), "logo.png")
+        ]
+        
+        for path in logo_paths:
+            if os.path.exists(path):
+                try:
+                    self.logo = tk.PhotoImage(file=path)
+                    # Resize logo if too large
+                    if self.logo.width() > 200 or self.logo.height() > 200:
+                        # Simple resize by subsampling
+                        factor = max(self.logo.width() // 200, self.logo.height() // 200, 1)
+                        self.logo = self.logo.subsample(factor, factor)
+                    
+                    logo_label = tk.Label(parent, image=self.logo, bg='#f0f0f0')
+                    logo_label.pack(pady=(0, 20))
+                    break
+                except tk.TclError:
+                    # Invalid image file
+                    continue
+
+    def clear_all(self):
+        """Clear all input and output fields."""
+        self.number_entry.delete(0, tk.END)
+        self.from_base_entry.delete(0, tk.END)
+        self.to_base_entry.delete(0, tk.END)
+        self.result_text.delete(1.0, tk.END)
+
+    def convert(self):
+        """Perform the base conversion."""
+        try:
+            number = self.number_entry.get().strip()
+            from_base = int(self.from_base_entry.get().strip())
+            to_base = int(self.to_base_entry.get().strip())
+            
+            # Validate inputs
+            if not number:
+                raise ValueError("Please enter a number")
+            
+            if not (2 <= from_base <= 16):
+                raise ValueError("From base must be between 2 and 16")
+            
+            if not (2 <= to_base <= 16):
+                raise ValueError("To base must be between 2 and 16")
+            
+            # Validate number format for the given base
+            self.validate_number_for_base(number, from_base)
+            
+            # Perform conversion
+            if '.' in number:
+                # Input is a decimal number
+                decimal_number = self.base_to_decimal_float(number, from_base)
+                converted_number = self.decimal_to_base_float(decimal_number, to_base)
+            else:
+                # Input is an integer
+                decimal_number = int(number, from_base)
+                converted_number = self.decimal_to_base(decimal_number, to_base)
+            
+            # Display result
+            self.result_text.delete(1.0, tk.END)
+            self.result_text.insert(tk.END, str(converted_number))
+            
+        except ValueError as e:
+            messagebox.showerror("Input Error", str(e))
+        except Exception as e:
+            messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
+
+    def validate_number_for_base(self, number, base):
+        """Validate that the number is valid for the given base."""
+        valid_digits = "0123456789ABCDEF"[:base]
+        
+        for char in number.upper():
+            if char not in valid_digits and char != '.':
+                raise ValueError(f"Invalid digit '{char}' for base {base}")
+
+    def base_to_decimal_float(self, number, base):
+        """Convert a number with decimal point from any base to decimal."""
+        if '.' not in number:
+            return int(number, base)
+        
+        integer_part, fractional_part = number.split('.')
+        
+        # Convert integer part
+        decimal_value = int(integer_part, base) if integer_part else 0
+        
+        # Convert fractional part
+        if fractional_part:
+            for i, digit in enumerate(fractional_part.upper()):
+                digit_value = int(digit, 16)  # Works for bases up to 16
+                decimal_value += digit_value * (base ** -(i + 1))
+        
+        return decimal_value
+
+    def decimal_to_base(self, number, base):
+        """Convert a decimal integer to any base."""
+        if number == 0:
+            return "0"
+        
+        if number < 0:
+            return '-' + self.decimal_to_base(-number, base)
+        
+        digits = "0123456789ABCDEF"
+        result = ""
+        
+        while number > 0:
+            result = digits[number % base] + result
+            number //= base
+        
+        return result
+
+    def decimal_to_base_float(self, number, base):
+        """Convert a decimal float to any base."""
+        if number == 0:
+            return "0"
+        
+        if number < 0:
+            return '-' + self.decimal_to_base_float(-number, base)
+        
+        integer_part = int(number)
+        fractional_part = number - integer_part
+        
+        # Convert integer part
+        integer_result = self.decimal_to_base(integer_part, base)
+        
+        # Convert fractional part
+        if fractional_part == 0:
+            return integer_result
+        
+        fractional_result = ""
+        max_precision = 10  # Limit precision to avoid infinite loops
+        
+        for _ in range(max_precision):
+            if fractional_part == 0:
+                break
+            fractional_part *= base
+            digit = int(fractional_part)
+            fractional_result += "0123456789ABCDEF"[digit]
+            fractional_part -= digit
+        
+        return integer_result + "." + fractional_result
+
+    def run(self):
+        """Start the GUI application."""
+        self.root.mainloop()
+
+
+def main():
+    """Main entry point for the application."""
+    converter = BaseConverterGUI()
+    converter.run()
+
+
+if __name__ == "__main__":
+    main()
